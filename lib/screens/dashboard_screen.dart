@@ -4,6 +4,7 @@ import '../providers/auth_provider.dart';
 import 'students_screen.dart';
 import 'admins_screen.dart';
 import 'settings_screen.dart';
+import 'semester_report_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -150,6 +151,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 _drawerItem(Icons.people_outline, 'Manage Students', const StudentsScreen()),
                 _drawerItem(Icons.admin_panel_settings_outlined, 'Manage Admins', const AdminsScreen()),
                 _drawerItem(Icons.settings_outlined, 'System Settings', const SettingsScreen()),
+                _drawerItem(Icons.receipt_long_outlined, 'Semester Report', const SemesterReportScreen()),
                 const Divider(height: 24),
                 ListTile(
                   leading: const Icon(Icons.logout, color: Colors.red),
