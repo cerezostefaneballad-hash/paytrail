@@ -13,6 +13,7 @@ class Student {
   final String? thirdDate;
   final double balance;
   final String status;
+  final double carriedOverBalance;
   final String? issuedBy;
 
   Student({
@@ -30,6 +31,7 @@ class Student {
     this.thirdDate,
     this.balance = 0,
     this.status = 'Unpaid',
+    this.carriedOverBalance = 0,
     this.issuedBy,
   });
 
@@ -51,6 +53,7 @@ class Student {
     thirdDate: j['third_date'],
     balance: double.tryParse('${j['balance'] ?? 0}') ?? 0,
     status: j['status'] ?? 'Unpaid',
+    carriedOverBalance: double.tryParse('${j['carried_over_balance'] ?? 0}') ?? 0,
     issuedBy: j['issued_by'],
   );
 
