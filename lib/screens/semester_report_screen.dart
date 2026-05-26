@@ -34,11 +34,9 @@ class _SemesterReportScreenState extends State<SemesterReportScreen> {
       setState(() {
         _report = response;
         final years = response['available_years'];
-        if (years != null && years is List) {
-          _availableYears = List<String>.from(years);
-        } else {
-          _availableYears = [];
-        }
+        _availableYears = (years is List)
+            ? List<String>.from(years)
+            : [];
         _loading = false;
       });
     } catch (e) {
@@ -78,7 +76,7 @@ class _SemesterReportScreenState extends State<SemesterReportScreen> {
 
   Widget _buildFilterBar() {
     return Padding(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
       child: Row(
         children: [
           Expanded(
@@ -87,18 +85,17 @@ class _SemesterReportScreenState extends State<SemesterReportScreen> {
               hint: const Text('All Years'),
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                contentPadding:
+                EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
               items: [
                 const DropdownMenuItem(value: '', child: Text('All Years')),
-                ..._availableYears.map((year) {
-                  return DropdownMenuItem(value: year, child: Text(year));
-                }).toList(),
+                ..._availableYears.map(
+                      (year) => DropdownMenuItem(value: year, child: Text(year)),
+                ),
               ],
               onChanged: (value) {
-                setState(() {
-                  _selectedYear = value ?? '';
-                });
+                setState(() => _selectedYear = value ?? '');
                 _loadReport();
               },
             ),
@@ -110,7 +107,8 @@ class _SemesterReportScreenState extends State<SemesterReportScreen> {
               hint: const Text('All Semesters'),
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                contentPadding:
+                EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
               items: const [
                 DropdownMenuItem(value: '', child: Text('All Semesters')),
@@ -118,9 +116,7 @@ class _SemesterReportScreenState extends State<SemesterReportScreen> {
                 DropdownMenuItem(value: '2nd sem', child: Text('2nd Semester')),
               ],
               onChanged: (value) {
-                setState(() {
-                  _selectedSemester = value ?? '';
-                });
+                setState(() => _selectedSemester = value ?? '');
                 _loadReport();
               },
             ),
@@ -131,24 +127,19 @@ class _SemesterReportScreenState extends State<SemesterReportScreen> {
   }
 
   Widget _buildSummaryCards() {
-    final summary = _report?['summary'];
-    final totalStudents = summary != null && summary['total_students'] != null
-        ? summary['total_students']
-        : 0;
-    final totalCollected = summary != null && summary['total_collected'] != null
-        ? (summary['total_collected'] as num).toDouble()
-        : 0.0;
-    final totalReceivable = summary != null && summary['total_receivable'] != null
-        ? (summary['total_receivable'] as num).toDouble()
-        : 0.0;
+    final summary          = _report?['summary'] as Map<String, dynamic>?;
+    final totalStudents    = (summary?['total_students']  as num?)?.toInt()    ?? 0;
+    final totalCollected   = (summary?['total_collected']  as num?)?.toDouble() ?? 0.0;
+    final totalReceivable  = (summary?['total_receivable'] as num?)?.toDouble() ?? 0.0;
+    final totalOutstanding = totalReceivable - totalCollected;
 
-    return Container(
+    return Padding(
       padding: const EdgeInsets.all(12),
       child: Row(
         children: [
           Expanded(
             child: _summaryCard(
-              'Total Students',
+              'Students',
               '$totalStudents',
               Icons.people,
               const Color(0xFF3A2B6A),
@@ -159,15 +150,15 @@ class _SemesterReportScreenState extends State<SemesterReportScreen> {
             child: _summaryCard(
               'Collected',
               '₱${totalCollected.toStringAsFixed(2)}',
-              Icons.receipt,
+              Icons.check_circle_outline,
               Colors.green,
             ),
           ),
           const SizedBox(width: 8),
           Expanded(
             child: _summaryCard(
-              'Receivable',
-              '₱${totalReceivable.toStringAsFixed(2)}',
+              'Outstanding',
+              '₱${totalOutstanding.toStringAsFixed(2)}',
               Icons.attach_money,
               Colors.orange,
             ),
@@ -177,20 +168,27 @@ class _SemesterReportScreenState extends State<SemesterReportScreen> {
     );
   }
 
-  Widget _summaryCard(String title, String value, IconData icon, Color color) {
+  Widget _summaryCard(
+      String title, String value, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withOpacity(0.08),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.2)),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: color, size: 24),
+          Icon(icon, color: color, size: 22),
           const SizedBox(height: 4),
           Text(
             value,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
           ),
           Text(
             title,
@@ -204,96 +202,126 @@ class _SemesterReportScreenState extends State<SemesterReportScreen> {
   Widget _buildReportList() {
     final reportList = _report?['report'];
     if (reportList == null || reportList is! List || reportList.isEmpty) {
-      return const Center(child: Text('No students found'));
+      return const Center(child: Text('No students found for this filter'));
     }
     return ListView.builder(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(top: 8, bottom: 16),
       itemCount: reportList.length,
       itemBuilder: (context, index) {
-        final student = reportList[index] as Map<String, dynamic>;
-        return _buildStudentCard(student);
+        return _buildStudentCard(
+            reportList[index] as Map<String, dynamic>);
       },
     );
   }
 
   Widget _buildStudentCard(Map<String, dynamic> student) {
-    final status = student['status'] as String? ?? 'Not Enrolled';
-    Color statusColor;
-    if (status == 'Fully Paid') {
-      statusColor = Colors.green;
-    } else if (status == 'Partial') {
-      statusColor = Colors.orange;
-    } else if (status == 'Unpaid') {
-      statusColor = Colors.red;
-    } else {
-      statusColor = Colors.grey;
-    }
-
-    final hasCarryOver = student['has_carry_over'] == true;
-    final carriedAmount = (student['carried_amount'] as num?)?.toDouble() ?? 0.0;
-    final fullName = student['full_name'] as String? ?? 'Unknown';
-    final studentId = student['student_id'] as String? ?? '';
-    final yearLevel = student['year_level'] as String? ?? '';
-    final totalPayable = (student['total_payable'] as num?)?.toDouble() ?? 0.0;
-    final totalPaid = (student['total_paid'] as num?)?.toDouble() ?? 0.0;
+    final status             = student['status'] as String? ?? 'Unpaid';
+    final hasCarryOver       = student['has_carry_over'] == true;
+    final carriedAmount      = (student['carried_amount']      as num?)?.toDouble() ?? 0.0;
+    final fullName           = student['full_name']            as String? ?? 'Unknown';
+    final studentId          = student['student_id']           as String? ?? '';
+    final yearLevel          = student['year_level']           as String? ?? '';
+    final totalPayable       = (student['total_payable']       as num?)?.toDouble() ?? 0.0;
+    final totalPaid          = (student['total_paid']          as num?)?.toDouble() ?? 0.0;
     final outstandingBalance = (student['outstanding_balance'] as num?)?.toDouble() ?? 0.0;
+
+    final Color statusColor = switch (status) {
+      'Fully Paid' => Colors.green,
+      'Partial'    => Colors.orange,
+      'Unpaid'     => Colors.red,
+      _            => Colors.grey,
+    };
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ExpansionTile(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        collapsedShape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         leading: CircleAvatar(
-          backgroundColor: statusColor.withOpacity(0.2),
+          backgroundColor: statusColor.withOpacity(0.15),
           child: Text(
-            fullName.isNotEmpty ? fullName.substring(0, 1) : '?',
-            style: TextStyle(color: statusColor),
+            fullName.isNotEmpty ? fullName[0].toUpperCase() : '?',
+            style: TextStyle(
+                color: statusColor, fontWeight: FontWeight.bold),
           ),
         ),
-        title: Text(fullName),
-        subtitle: Text('ID: $studentId • Year: $yearLevel'),
+        title: Text(
+          fullName,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+        ),
+        subtitle: Text(
+          'ID: $studentId  •  Year $yearLevel',
+          style: const TextStyle(fontSize: 12),
+        ),
         trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          padding:
+          const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
             color: statusColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             status,
-            style: TextStyle(color: statusColor, fontSize: 11, fontWeight: FontWeight.w500),
+            style: TextStyle(
+              color: statusColor,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (hasCarryOver)
+                // Carry-over warning banner
+                if (hasCarryOver) ...[
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(10),
                     margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.1),
+                      color: Colors.orange.withOpacity(0.08),
                       borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                          color: Colors.orange.withOpacity(0.3)),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.warning_amber, color: Colors.orange, size: 16),
+                        const Icon(Icons.warning_amber,
+                            color: Colors.orange, size: 16),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Carry-over balance: ₱${carriedAmount.toStringAsFixed(2)} from previous term',
-                            style: const TextStyle(fontSize: 12),
+                            'Includes ₱${carriedAmount.toStringAsFixed(2)} carry-over from previous term',
+                            style: const TextStyle(
+                                fontSize: 12, color: Colors.orange),
                           ),
                         ),
                       ],
                     ),
                   ),
-                _infoRow('Total Payable', '₱${totalPayable.toStringAsFixed(2)}'),
+                ],
+
+                // Payment breakdown rows
+                _infoRow('Total Payable',
+                    '₱${totalPayable.toStringAsFixed(2)}'),
+                const Divider(height: 16),
+                _infoRow('Total Paid',
+                    '₱${totalPaid.toStringAsFixed(2)}',
+                    color: Colors.green),
                 const SizedBox(height: 6),
-                _infoRow('Total Paid', '₱${totalPaid.toStringAsFixed(2)}', color: Colors.green),
-                const SizedBox(height: 6),
-                _infoRow('Outstanding Balance', '₱${outstandingBalance.toStringAsFixed(2)}',
-                    color: outstandingBalance > 0 ? Colors.red : Colors.green),
+                _infoRow(
+                  'Outstanding Balance',
+                  '₱${outstandingBalance.toStringAsFixed(2)}',
+                  color: outstandingBalance > 0
+                      ? Colors.red
+                      : Colors.green,
+                  bold: true,
+                ),
               ],
             ),
           ),
@@ -302,12 +330,22 @@ class _SemesterReportScreenState extends State<SemesterReportScreen> {
     );
   }
 
-  Widget _infoRow(String label, String value, {Color? color}) {
+  Widget _infoRow(String label, String value,
+      {Color? color, bool bold = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(color: Colors.grey)),
-        Text(value, style: TextStyle(fontWeight: FontWeight.w500, color: color)),
+        Text(label,
+            style: TextStyle(
+                fontSize: 13, color: Colors.grey.shade600)),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: bold ? FontWeight.bold : FontWeight.w500,
+            color: color,
+          ),
+        ),
       ],
     );
   }

@@ -137,25 +137,16 @@ class ApiService {
     return Map<String, dynamic>.from(_handle(r));
   }
 
-  // ===== SEMESTER REPORT =====
-  Future<Map<String, dynamic>> getSemesterReport({String? academicYear, String? semester}) async {
-    final queryParams = <String, String>{};
-    if (academicYear != null && academicYear.isNotEmpty) {
-      queryParams['academic_year'] = academicYear;
-    }
-    if (semester != null && semester.isNotEmpty) {
-      queryParams['semester'] = semester;
-    }
-
-    final uri = Uri.parse('${ApiConfig.baseUrl}/semester-report')
-        .replace(queryParameters: queryParams);
-
-    final response = await http.get(uri, headers: _headers);
-    final result = _handle(response);
-
-    if (result == null) {
-      return {};
-    }
-    return Map<String, dynamic>.from(result as Map);
+  Future<Map<String, dynamic>> getSemesterReport({
+    String? academicYear,
+    String? semester,
+  }) async {
+    final qs = <String, String>{};
+    if (academicYear != null && academicYear.isNotEmpty) qs['academic_year'] = academicYear;
+    if (semester     != null && semester.isNotEmpty)     qs['semester']      = semester;
+    final uri = Uri.parse('${ApiConfig.baseUrl}/report')
+        .replace(queryParameters: qs.isEmpty ? null : qs);
+    final r = await http.get(uri, headers: _headers);
+    return Map<String, dynamic>.from(_handle(r));
   }
 }
